@@ -26,7 +26,7 @@ namespace {
         std::unordered_map<std::string, std::function<ValueAsync<temp_json>(const temp_json &)>> m_handlers;
         ValueAsync<> serve_endpoint(phttp::ServerEndpoint *ep);
         ValueAsync<> serve_endpoint_inner(phttp::ServerEndpoint &ep);
-        static phttp::Response create_success_response(phttp::Headers &&headers, phttp::Block &&result_block);
+        static phttp::Response create_success_response(phttp::Headers &&headers, phttp::Block &&block, int code = 200);
         static phttp::Response create_error_response(phttp::Headers &&headers, int code, std::string_view message);
     };
 
@@ -104,16 +104,20 @@ namespace {
             catch (ServerUserError &) {
                 co_return create_error_response(std::move(headers), 400, "Bad Request: User Error");
             }
+            catch (ServerUserCodeError & e) {
+                auto block = json_to_block(temp_json::parse(e.response()));
+                co_return create_success_response(std::move(headers), std::move(block), e.code());
+            }
             catch (...) {
                 co_return create_error_response(std::move(headers), 500, "Internal Server Error");
             }
         });
     }
 
-    phttp::Response Server::create_success_response(phttp::Headers &&headers, phttp::Block &&result_block) {
+    phttp::Response Server::create_success_response(phttp::Headers &&headers, phttp::Block &&block, int code) {
         return phttp::Response{
-                .line = phttp::ResponseLine(200, "OK", temp::resource()),
-                .headers = std::move(headers), .body = std::move(result_block)
+                .line = phttp::ResponseLine(code, "OK", temp::resource()),
+                .headers = std::move(headers), .body = std::move(block)
         };
     }
 

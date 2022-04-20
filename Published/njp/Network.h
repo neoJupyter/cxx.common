@@ -29,6 +29,16 @@ namespace njp {
         using std::runtime_error::runtime_error;
     };
 
+    class ServerUserCodeError : std::runtime_error {
+    public:
+        ServerUserCodeError(int code, std::string_view response);
+        [[nodiscard]] auto code() const noexcept { return m_code; };
+        [[nodiscard]] auto response() const noexcept { return m_response; }
+    private:
+        int m_code;
+        std::string m_response;
+    };
+
     struct IClient: kls::PmrBase {
         virtual kls::coroutine::ValueAsync<temp_json> exec(std::string_view m, std::string_view p, temp_json r) = 0;
         virtual kls::coroutine::ValueAsync<> close() = 0;

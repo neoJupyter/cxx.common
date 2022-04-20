@@ -1,6 +1,6 @@
 #include "NetUtils.h"
 #include "njp/Network.h"
-
+#include <kls/Format.h>
 
 using namespace njp;
 using namespace kls;
@@ -56,3 +56,7 @@ ClientRemoteError::ClientRemoteError(
 }
 
 const char *ClientRemoteError::what() const noexcept { return m_what_data.c_str(); }
+
+ServerUserCodeError::ServerUserCodeError(int code, std::string_view response) :
+        runtime_error(format("Request handling failed\nWith HttpCode: {}\nWith Response: {}", code, response)),
+        m_code(code), m_response(response) {}
